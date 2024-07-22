@@ -7,3 +7,4 @@
 2_analysis/CodeToRun_local2.R
 1_analysis/CodeToRun_local2.R
 1_analysis/results/*.csv
+3_shiny/data/*.csv
