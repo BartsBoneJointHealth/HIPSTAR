@@ -1,6 +1,10 @@
+# get cdm summary ------
+cli::cli_inform("Getting cdm summary")
+cdm_summary <- summary(cdm)
+
 # import codes -----
 cli::cli_inform("Getting codes")
-codes <- read_csv("codes.csv", col_types = c("i", "c", "c")) |>
+codes <- read_csv(here("codes.csv"), col_types = c("i", "c", "c")) |>
   mutate(cohort_name = omopgenerics::toSnakeCase(cohort_name))
 codes <- split(x = codes,
       f = codes$cohort_name)
@@ -119,7 +123,7 @@ chars <- cdm$hipstar_cohorts_main %>%
   )
 attr(chars, "settings")$result_id <- attr(chars, "settings")$result_id * 10L
 
-# large scale characteristics ------
+# summarise large scale characteristics ------
 cli::cli_inform("Getting large scale characteristics")
 lsc <- cdm$hipstar_cohorts_main %>%
   summariseLargeScaleCharacteristics(
@@ -132,7 +136,8 @@ lsc <- cdm$hipstar_cohorts_main %>%
       c(1,30),
       c(1,90),
       c(1,365),
-      c(1,Inf)),
+      c(1,Inf),
+      c(-Inf, Inf)),
     eventInWindow = c("condition_occurrence",
                       "visit_occurrence",
                       "observation",
@@ -146,7 +151,8 @@ attr(lsc, "settings")$result_id <- attr(lsc, "settings")$result_id * 100L
 
 # export results -----
 cli::cli_inform("Exporting results")
-results <- omopgenerics::bind(cohort_count,
+results <- omopgenerics::bind(cdm_summary,
+                              cohort_count,
                               chars,
                               lsc)
 omopgenerics::exportSummarisedResult(results,

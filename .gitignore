@@ -1,6 +1,9 @@
-
-*.csv
 1_database_summary/CodeToRun_local.R
 1_database_summary/CodeToRun_sql_server.R
 .Rproj.user
 .DS_store
+1_database_summary/Results/*.csv
+2_analysis/results/*.csv
+2_analysis/CodeToRun_local2.R
+1_analysis/CodeToRun_local2.R
+1_analysis/results/*.csv
