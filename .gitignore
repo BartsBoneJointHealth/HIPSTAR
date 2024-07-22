@@ -2,3 +2,5 @@
 *.csv
 1_database_summary/CodeToRun_local.R
 1_database_summary/CodeToRun_sql_server.R
+.Rproj.user
+.DS_store
