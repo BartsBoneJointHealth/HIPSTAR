@@ -1,0 +1,13 @@
+---
+title: "shiny app data"
+format: gfm
+editor: visual
+---
+
+Add here the results (.csv or .zip files) to for the shiny.
+
+::: callout-warning
+**DO NOT CHANGE THE NAME OF THE FILES.** Only results starting with `cdm_summary_...`, `patient_demographics_...`, `large_Scale_characteristics_...` (`1_database_summary`); and `results_` (`2_analysis`) files will be considered.
+:::
+
+Follow instructions to launch the shiny: https://github.com/BartsBoneJointHealth/HIPSTAR/blob/main/3_shiny/README.md
