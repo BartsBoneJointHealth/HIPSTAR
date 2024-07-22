@@ -1,19 +1,32 @@
 ---
-title: "README"
+title: "shiny app code"
 format: gfm
 editor: visual
 ---
-# shiny app code
 
 This code is used to visualise the results from:
 
-- [1_database_summary](https://github.com/BartsBoneJointHealth/HIPSTAR/tree/main/1_database_summary)
+-   [1_database_summary](https://github.com/BartsBoneJointHealth/HIPSTAR/tree/main/1_database_summary)
 
-- [2_analysis](https://github.com/BartsBoneJointHealth/HIPSTAR/tree/main/2_analysis)
+-   [2_analysis](https://github.com/BartsBoneJointHealth/HIPSTAR/tree/main/2_analysis)
 
 To launch the shiny add the results in the data folder. You can add them as .csv or .zip files, and combine multiple database results.
 
-::: {.callout-warning}
-DO NOT CHANGE THE NAME OF THE FILES. Only results starting with `cdm_summary_...`, `patient_demographics_...`, `large_Scale_characteristics_...` (`1_database_summary`); and `results_` (`2_analysis`) files will be considered.
+::: callout-warning
+**DO NOT CHANGE THE NAME OF THE FILES.** Only results starting with `cdm_summary_...`, `patient_demographics_...`, `large_Scale_characteristics_...` (`1_database_summary`); and `results_` (`2_analysis`) files will be considered.
 :::
+
+## Launch the shiny
+
+Follow the next steps to launch the shiny:
+
+1. Download locally the project: <https://github.com/BartsBoneJointHealth/HIPSTAR/archive/refs/heads/main.zip>
+
+2. Open the project locally: open the [3_shiny.Rproj](https://github.com/BartsBoneJointHealth/HIPSTAR/blob/main/3_shiny/3_shiny.Rproj) file.
+
+::: callout-tip
+The project is correctly open if you can see in the top right of your RStudio session this:
+[](https://github.com/BartsBoneJointHealth/HIPSTAR/blob/main/3_shiny/images/project.png?raw=true)
+:::
+
 
