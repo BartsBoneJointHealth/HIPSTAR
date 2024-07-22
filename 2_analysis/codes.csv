@@ -1,0 +1,59 @@
+﻿concept_id,concept_name,cohort_name
+40479229,Percutaneous fixation of fracture of neck of femur,All Hip Fracture Surgery
+4343341,Primary open reduction of fracture of neck of femur and open fixation using dynamic hip screw,All Hip Fracture Surgery
+46270907,Closed reduction of fracture of proximal femur and internal fixation using bone nail,All Hip Fracture Surgery
+4297365,Partial hip replacement by prosthesis,All Hip Fracture Surgery
+4203771,Total replacement of hip,All Hip Fracture Surgery
+37017416,Partial hip replacement with bipolar prosthesis,All Hip Fracture Surgery
+4142076,Primary cemented total hip replacement,All Hip Fracture Surgery
+4076471,Primary uncemented hemiarthroplasty of hip,All Hip Fracture Surgery
+4150990,Prosthetic hybrid total replacement of hip joint,All Hip Fracture Surgery
+4079259,Primary uncemented total hip replacement,All Hip Fracture Surgery
+4327115,Operative procedure on hip,All Hip Fracture Surgery
+4034297,Arthroplasty - excision,All Hip Fracture Surgery
+46270907,Primary closed reduction and internal fixation of proximal femoral fracture with screw/nail and plate device,All Hip Fracture Surgery
+4321874,Other nonoperative procedures,All Hip Fracture Surgery
+4144424,Primary open reduction and internal fixation of proximal femoral fracture with screw/nail and plate device,All Hip Fracture Surgery
+4321874,Other nonoperative procedures,All Hip Fracture Surgery
+433856,Fracture of neck of femur,All Hip Fracture Conditions
+4133012,Intertrochanteric fracture,All Hip Fracture Conditions
+4135748,Subtrochanteric fracture of femur,All Hip Fracture Conditions
+4138412,Fracture of proximal end of femur,All Hip Fracture Conditions
+46270166,Periprosthetic fracture of hip,All Hip Fracture Conditions
+433856,Fracture of neck of femur,Intracapsular fractures
+433856,Fracture of neck of femur,displaced intracapsular
+4047514,Fracture with displacement,displaced intracapsular
+433856,Fracture of neck of femur,undisplaced intracapsular
+4139391,Undisplaced fracture,undisplaced intracapsular
+4133012,Intertrochanteric fracture,Extracapsular fractures
+4135748,Subtrochanteric fracture of femur,Extracapsular fractures
+4138412,Fracture of proximal end of femur,Extracapsular fractures
+4133012,Intertrochanteric fracture,Intertrochanteric
+4135748,Subtrochanteric fracture of femur,Subtrochanteric
+4343341,Primary open reduction of fracture of neck of femur and open fixation using dynamic hip screw,Extramedullary devices: Sliding hip screw (SHS)
+4144424,Primary open reduction and internal fixation of proximal femoral fracture with screw/nail and plate device,Extramedullary devices: Non-sliding hip screw (SHS)
+46270907,Closed reduction of fracture of proximal femur and internal fixation using bone nail,Intramedullary (IM) nail
+40479229,Percutaneous fixation of fracture of neck of femur,Cannulated hip screws
+4203771,Total replacement of hip,Total hip replacement (THR)
+4150990,Prosthetic hybrid total replacement of hip joint,Total hip replacement (THR)
+4079259,Primary uncemented total hip replacement,Total hip replacement (THR)
+4142076,Primary cemented total hip replacement,Total hip replacement (THR)
+4142076,Primary cemented total hip replacement,cemented total hip replacement
+4079259,Primary uncemented total hip replacement,uncemented total hip replacement
+4150990,Prosthetic hybrid total replacement of hip joint,hybrid total hip replacement
+4297365,Partial hip replacement by prosthesis,Hemiarthroplasty
+37017416,Partial hip replacement with bipolar prosthesis,Hemiarthroplasty
+4297365,Partial hip replacement by prosthesis,cemented hemiarthroplasty
+37017416,Partial hip replacement with bipolar prosthesis,cemented hemiarthroplasty
+4106323,Cemented component fixation,cemented hemiarthroplasty
+4076471,Primary uncemented hemiarthroplasty of hip,uncemented hemiarthroplasty
+37017416,Partial hip replacement with bipolar prosthesis,uncemented hemiarthroplasty
+4119646,Uncemented component fixation,uncemented hemiarthroplasty
+4321874,Other nonoperative procedures,Non-operatively managed hip fracture
+45772710,Pathological fracture of proximal femur due to neoplastic disease,Pathological fracture
+45766906,Pathological fracture of proximal end of femur,Pathological fracture
+45766906,Pathological fracture of proximal end of femur,Pathological fracture
+45772710,Pathological fracture of proximal femur due to neoplastic disease,Malignancy
+45766906,Pathological fracture of proximal end of femur,Atypical
+4125679,Seen by physician,Physician involvement
+4140767,Seen by care of the elderly physician,Physician involvement
