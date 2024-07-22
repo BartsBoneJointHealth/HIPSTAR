@@ -4,3 +4,6 @@
 .DS_store
 1_database_summary/Results/*.csv
 2_analysis/results/*.csv
+2_analysis/CodeToRun_local2.R
+1_analysis/CodeToRun_local2.R
+1_analysis/results/*.csv
