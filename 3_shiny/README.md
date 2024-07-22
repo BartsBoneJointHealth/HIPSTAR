@@ -32,4 +32,20 @@ Follow the next steps to launch the shiny:
 >
 > The project is correctly open if you can see in the top right of your
 > RStudio session this:
-> [](https://github.com/BartsBoneJointHealth/HIPSTAR/blob/main/3_shiny/images/project.png?raw=true)
+> ![](https://github.com/BartsBoneJointHealth/HIPSTAR/blob/main/3_shiny/images/project.png?raw=true)
+
+3.  Restore the library to do so run: `renv::restore()` in the console.
+
+> [!NOTE]
+>
+> You need to install specific versions of packages as packages can
+> change over time, that’s what renv does for you.
+
+4.  Launch app, to launch the app you can click the ‘Run App’ button on
+    the top right or run `shiny::runApp()` in the console. The shiny
+    should pop-up in a new window.
+
+> [!WARNING]
+>
+> If you have any problem running the shiny open an issue:
+> <https://github.com/BartsBoneJointHealth/HIPSTAR/issues/new>.
