@@ -121,7 +121,6 @@ chars <- cdm$hipstar_cohorts_main %>%
            window = list(c(1,Inf)))
     )
   )
-attr(chars, "settings")$result_id <- attr(chars, "settings")$result_id * 10L
 
 # summarise large scale characteristics ------
 cli::cli_inform("Getting large scale characteristics")
@@ -147,14 +146,45 @@ lsc <- cdm$hipstar_cohorts_main %>%
                       "measurement"
     ),
     minimumFrequency = 0)
-attr(lsc, "settings")$result_id <- attr(lsc, "settings")$result_id * 100L
+
+bindSR <- function(...) {
+  # initial checks
+  results <- list(...)
+  omopgenerics:::assertList(results, class = "summarised_result")
+
+  settings <- lapply(results, settings) |>
+    dplyr::bind_rows(.id = "list_id")
+
+  results <- results |>
+    dplyr::bind_rows(.id = "list_id")
+
+  cols <- colnames(settings)[!colnames(settings) %in% c("list_id", "result_id")]
+  dic <- settings |>
+    dplyr::select(!dplyr::all_of(c("list_id", "result_id"))) |>
+    dplyr::distinct() |>
+    dplyr::mutate("new_result_id" = as.integer(dplyr::row_number())) |>
+    dplyr::inner_join(settings, by = cols) |>
+    dplyr::select(c("list_id", "result_id", "new_result_id"))
+
+  settings <- settings |>
+    dplyr::inner_join(dic, by = c("result_id", "list_id")) |>
+    dplyr::select(-c("result_id", "list_id")) |>
+    dplyr::rename("result_id" = "new_result_id") |>
+    dplyr::distinct()
+
+  results <- results |>
+    dplyr::inner_join(dic, by = c("result_id", "list_id")) |>
+    dplyr::select(-c("result_id", "list_id")) |>
+    dplyr::rename("result_id" = "new_result_id") |>
+    dplyr::distinct() |>
+    omopgenerics::newSummarisedResult(settings = settings)
+
+  return(results)
+}
 
 # export results -----
 cli::cli_inform("Exporting results")
-results <- omopgenerics::bind(cdm_summary,
-                              cohort_count,
-                              chars,
-                              lsc)
+results <- bindSR(cdm_summary, cohort_count, chars, lsc)
 omopgenerics::exportSummarisedResult(results,
                                      minCellCount = minCellCount,
                                      path = here("results"))
