@@ -6,14 +6,22 @@ source(here::here("functions.R"), local = TRUE)
 data <- readData()
 
 data$lsc <- data$lsc |>
+  visOmopResults::addSettings(columns = "table_name") |>
   dplyr::filter(estimate_name == "percentage") |>
-  dplyr::select("cdm_name", "variable_name", "window" = "variable_level", "estimate_value", "additional_name", "additional_level") |>
-  dplyr::mutate(dplyr::across(
-    dplyr::starts_with("additional"), ~ gsub(" and ", " &&& ", .x)
-  )) |>
-  visOmopResults::splitAdditional() |>
-  dplyr::mutate(estimate_value = as.numeric(estimate_value), concept = as.integer(concept)) |>
-  dplyr::select("cdm_name", "table_name", "concept_name" = "variable_name", "concept_id" = "concept", "window", "percentage" = "estimate_value")
+  visOmopResults::splitAll() |>
+  dplyr::rename(concept_name = "variable_name", window = "variable_level") |>
+  dplyr::select(-"estimate_name", -"estimate_type", -"result_id") |>
+  dplyr::mutate(estimate_value = as.numeric(estimate_value), concept_id = as.integer(concept_id)) |>
+  dplyr::relocate(dplyr::starts_with("concept")) |>
+  dplyr::relocate("table_name", .before = "estimate_value")
+
+data$counts <- data$counts |>
+  visOmopResults::splitGroup() |>
+  visOmopResults::splitStrata()
+
+data$chars <- data$chars |>
+  visOmopResults::splitGroup() |>
+  visOmopResults::splitStrata()
 
 # theme -----
 mytheme <- fresh::create_theme(
@@ -54,14 +62,6 @@ ui <- dashboardPage(
         menuSubItem(
           text = "Database details",
           tabName = "db_snapshot"
-        ),
-        menuSubItem(
-          text = "Database demographics",
-          tabName = "db_demographics"
-        ),
-        menuSubItem(
-          text = "Database codes",
-          tabName = "db_codes"
         )
       ),
       menuItem(
@@ -116,36 +116,52 @@ ui <- dashboardPage(
           )
         )
       ),
-      ### db demographics ----
+      ### study counts ----
       tabItem(
-        tabName = "db_demographics",
-        h4("Demographics at the moment they enter to the database."),
-        selectors(data$patient_demographics, "db_demographics", c("cdm_name", "variable_name")),
+        tabName = "study_counts",
+        h4("Counts for the different cohorts in the study"),
+        selectors(data$counts, "counts", c("cdm_name", "cohort_name", "year", "age_group", "sex", "variable_name")),
         tabsetPanel(
           type = "tabs",
           tabPanel(
-            "Tidy table",
-            gt::gt_output("db_demographics_tidy") |> shinycssloaders::withSpinner()
+            "tidy table",
+            DT::DTOutput("counts_tidy") |> shinycssloaders::withSpinner()
+          ),
+          tabPanel(
+            "gt table",
+            gt::gt_output("counts_gt") |> shinycssloaders::withSpinner()
           ),
           tabPanel(
             "Plot",
-            plotOutput("db_demographics_plot") |> shinycssloaders::withSpinner()
+            shinyWidgets::pickerInput("counts_facet", label = "Facet by", choices = c("cdm_name", "cohort_name", "age_group", "sex", "variable_name"), selected = character(), multiple = TRUE),
+            plotly::plotlyOutput("counts_plot") |> shinycssloaders::withSpinner()
           )
         )
       ),
-      ### db codes ----
+      ### study characteristics ----
       tabItem(
-        tabName = "db_codes",
-        h4("Percentage of the concept ids recorded in the database"),
-        h5("Windows origin is at start of subject observation"),
-        h5("Only records within the observation period of the subjects are reported"),
-        selectors(data$lsc, "db_codes", c("cdm_name", "window", "table_name")),
-        shinyWidgets::pickerInput("db_codes_pivot", label = "Pivot", choices = c("cdm_name", "window"), selected = character(), multiple = TRUE),
+        tabName = "study_characteristics",
+        h4("Characteristics of the different cohorts"),
+        selectors(data$chars, "chars", c("cdm_name", "cohort_name", "age_group", "sex")),
         tabsetPanel(
           type = "tabs",
           tabPanel(
-            "Data table",
-            DT::DTOutput("db_codes_data") |> shinycssloaders::withSpinner()
+            "gt table",
+            gt::gt_output("chars_gt") |> shinycssloaders::withSpinner()
+          )
+        )
+      ),
+      ### study lsc ----
+      tabItem(
+        tabName = "study_lsc",
+        h4("Large Scale Characteristics of the different cohorts"),
+        selectors(data$lsc, "lsc", c("cdm_name", "cohort_name", "age_group", "sex", "window", "table_name")),
+        shinyWidgets::pickerInput("lsc_compare", "Pivot", c("cdm_name", "cohort_name", "age_group", "sex", "window"), character(), multiple = T),
+        tabsetPanel(
+          type = "tabs",
+          tabPanel(
+            "data table",
+            DT::DTOutput("lsc_data") |> shinycssloaders::withSpinner()
           )
         )
       )
@@ -172,71 +188,75 @@ server <- function(input, output, session) {
         excludeColumns = c("variable_level", "result_id", "estimate_type")
       )
   })
-  # db demographics ----
-  getDemographics <- reactive({
-    filterData(data$patient_demographics, "db_demographics", input)
+  # study counts ----
+  getCounts <- reactive({
+    filterData(data$counts, "counts", input)
   })
-  output$db_demographics_tidy <- gt::render_gt({
-    getDemographics() |>
-      dplyr::filter(!estimate_name %in% c("q05", "q95")) |>
-      CohortCharacteristics::tableCharacteristics(
-        header = c("cdm_name"), 
-        excludeColumns = c("cohort_name", "result_id", "estimate_type", "additional_name", "additional_level"))
-  })
-  output$db_demographics_plot <- renderPlot({
-    x <- getDemographics()
-    vars <- x$variable_name |> unique()
-    validate(need(length(vars) == 1, "Please select only one variable to plot"))
-    type <- switch(vars,
-                   "Number subjects" = "barplot", 
-                   "Number records" = "barplot",
-                   "Cohort start date" = "boxplot",
-                   "Cohort end date" = "boxplot",
-                   "Age" = "boxplot",
-                   "Sex" = "barplot%",
-                   "Prior observation" = "boxplot",
-                   "Future observation" = "boxplot")
-    if (type == "barplot") {
-      x <- x |>
-        dplyr::mutate(estimate_value = as.integer(estimate_value))
-      p <- ggplot2::ggplot(x, mapping = ggplot2::aes(fill = cdm_name, color = cdm_name, x = cdm_name, y = estimate_value)) +
-        ggplot2::geom_bar(stat = "identity")
-    } else if (type == "barplot%") {
-      vars <- "Percentage of females"
-      x <- x |>
-        dplyr::filter(estimate_name == "percentage", variable_level == "Female") |>
-        dplyr::mutate(estimate_value = as.integer(estimate_value))
-      p <- ggplot2::ggplot(x, mapping = ggplot2::aes(fill = cdm_name, color = cdm_name, x = cdm_name, y = estimate_value)) +
-        ggplot2::geom_bar(stat = "identity")
-    } else {
-      x <- x |>
-        dplyr::filter(estimate_name %in% c("min", "q25", "median", "q75", "max")) |>
-        dplyr::select("cdm_name", "estimate_name", "estimate_value")
-      if (grepl("date", vars)) {
-        x <- x |>
-          dplyr::mutate(estimate_value = as.Date(estimate_value)) 
-      } else {
-        x <- x |>
-          dplyr::mutate(estimate_value = as.numeric(estimate_value))
-      }
-      x <- x |>
-        tidyr::pivot_wider(names_from = "estimate_name", values_from = "estimate_value")
-      p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes(color = cdm_name, x = cdm_name, lower = q25, upper = q75, middle = median, ymin = min, ymax = max)) +
-        ggplot2::geom_boxplot(stat = "identity")
-    }
-    p + ggplot2::ylab(vars)
-  })
-  # db codes ----
-  getCodes <- reactive({
-    filterData(data$lsc, "db_codes", input)
-  })
-  output$db_codes_data <- DT::renderDT({
-    x <- getCodes()
-    if (length(input$db_codes_pivot) > 0) {
-      x <- x |> 
-        tidyr::pivot_wider(names_from = input$db_codes_pivot, values_from = "percentage")
-    }
+  output$counts_tidy <- DT::renderDT({
+    x <- getCounts() |>
+      dplyr::select(-c("variable_level", "estimate_name", "estimate_type", "additional_name", "additional_level", "result_id")) |>
+      dplyr::mutate(estimate_value = as.integer(estimate_value)) |>
+      dplyr::rename(count = estimate_value)
     DT::datatable(x)
+  })
+  output$counts_gt <- gt::render_gt({
+    getCounts() |>
+      visOmopResults::uniteAdditional() |>
+      visOmopResults::uniteGroup(c("cohort_name")) |>
+      visOmopResults::uniteStrata(c("year", "age_group", "sex")) |>
+      CohortCharacteristics::tableCohortCount()
+  })
+  output$counts_plot <- plotly::renderPlotly({
+    x <- getCounts() |>
+      dplyr::filter(year != "overall") |>
+      dplyr::mutate(year = as.integer(year), estimate_value = as.integer(estimate_value)) |>
+      dplyr::select(-c("result_id", "variable_level", "estimate_name", "estimate_type", "additional_name", "additional_level"))
+    cols <- input$counts_facet
+    noCols <- c("cdm_name", "cohort_name", "age_group", "sex", "variable_name")
+    if (length(cols) > 0) {
+      x <- x |> 
+        tidyr::unite("facet", dplyr::all_of(cols))
+      noCols <- noCols[!noCols %in% cols]
+      if (length(noCols) > 0) {
+        x <- x |> tidyr::unite("color", dplyr::all_of(noCols))
+      } else {
+        x <- x |> dplyr::mutate("color" = "all")
+      }
+    } else {
+      x <- x |> 
+        dplyr::mutate(facet = "overall") |> 
+        tidyr::unite("color", dplyr::all_of(noCols))
+    }
+    p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes(x = year, y = estimate_value, color = color)) +
+      ggplot2::geom_point() +
+      ggplot2::geom_line() +
+      ggplot2::facet_wrap(ggplot2::vars(facet)) 
+    plotly::ggplotly(p)
+  })
+  # study characteristics ----
+  getChars <- reactive({
+    filterData(data$chars, "chars", input)
+  })
+  output$chars_gt <- gt::render_gt({
+    getChars() |>
+      visOmopResults::uniteGroup(c("cohort_name")) |>
+      visOmopResults::uniteStrata(c("age_group", "sex")) |>
+      CohortCharacteristics::tableCharacteristics()
+  })
+  # study lsc ----
+  getLsc <- reactive({
+    filterData(data$lsc, "lsc", input)
+  })
+  output$lsc_data <- DT::renderDT({
+    x <- getLsc()
+    cols <- input$lsc_compare
+    if (length(cols) > 0) {
+      x <- x |> 
+        tidyr::pivot_wider(names_from = dplyr::all_of(cols), values_from = "estimate_value")
+    } else {
+      x <- x |> dplyr::rename(percentage = estimate_value)
+    }
+    DT::datatable(data = x, options = list(scrollX = TRUE))
   })
   # end ----
 }

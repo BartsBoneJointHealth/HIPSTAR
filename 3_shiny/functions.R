@@ -1,26 +1,49 @@
 readData <- function() {
-  files <- list.files(here::here("data"), full.names = TRUE)
-  filesCsv <- files[tools::file_ext(files) == "csv"]
-  data <- readFiles(filesCsv)
-  filesZip <- files[tools::file_ext(files) == "zip"]
-  tmpdir <- tempdir()
-  for (fileZipe in filesZip) {
-    unzip(fileZipe, exdir = tmpdir)
-    files <- list.files(here::here("data"), full.names = TRUE)
-    filesCsv <- files[tools::file_ext(files) == "csv"]
-    data <- readFiles(filesCsv)
-  }
-  types <- patterns <- c("cdm_summary", "patient_demographics", "large_Scale_characteristics", "results")
-  for (ty in types) {
-    if (ty %in% names(data)) {
-      data[[ty]] <- data[[ty]] |> 
-        dplyr::distinct() |>
-        omopgenerics::newSummarisedResult()
-    }
-  }
-  newNames <- names(data)
-  newNames[newNames == "large_Scale_characteristics"] <- "lsc"
-  names(data) <- newNames
+  # files <- list.files(here::here("data"), full.names = TRUE)
+  # filesCsv <- files[tools::file_ext(files) == "csv"]
+  # data <- readFiles(filesCsv)
+  # filesZip <- files[tools::file_ext(files) == "zip"]
+  # tmpdir <- tempdir()
+  # for (fileZipe in filesZip) {
+  #   unzip(fileZipe, exdir = tmpdir)
+  #   files <- list.files(here::here("data"), full.names = TRUE)
+  #   filesCsv <- files[tools::file_ext(files) == "csv"]
+  #   data <- readFiles(filesCsv)
+  # }
+  # types <- "results"
+  # for (ty in types) {
+  #   if (ty %in% names(data)) {
+  #     data[[ty]] <- data[[ty]] |> 
+  #       dplyr::distinct() |>
+  #       omopgenerics::newSummarisedResult()
+  #   }
+  # }
+  # 
+  # data$counts <- data$results |> 
+  #   visOmopResults::filterSettings(result_type == "summarised_characteristics") |>
+  #   dplyr::filter(variable_name %in% c("Number subjects", "Number records"))
+  # 
+  # data$lsc <- data$results |> 
+  #   visOmopResults::filterSettings(result_type == "summarised_large_scale_characteristics")
+  # 
+  # data$cdm_summary <- data$results |> 
+  #   visOmopResults::filterSettings(result_type == "cdm_snapshot")
+  # 
+  # data$patient_demographics <- data$results |> 
+  #   visOmopResults::filterSettings(result_type == "summarised_characteristics") |>
+  #   dplyr::filter(!grepl("year", strata_name))
+  # data$results <- NULL
+  
+  data <- list()
+  data$lsc <- readr::read_csv(here::here("data", "lsc.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+    omopgenerics::newSummarisedResult()
+  data$counts <- readr::read_csv(here::here("data", "cohort_count.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+    omopgenerics::newSummarisedResult()
+  data$cdm_summary <- readr::read_csv(here::here("data", "cdm_summary.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+    omopgenerics::newSummarisedResult()
+  data$chars <- readr::read_csv(here::here("data", "chars.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+    omopgenerics::newSummarisedResult()
+  
   return(data)
 }
 readFiles <- function(files, data = list()) {
@@ -38,17 +61,13 @@ readFiles <- function(files, data = list()) {
   return(data)
 }
 getPat <- function(f) {
-  id <- NULL
   fname <- basename(f)
-  patterns <- c("cdm_summary", "patient_demographics", "large_Scale_characteristics", "results")
-  for (pat in patterns) {
-    if (startsWith(fname, pat)) {
-      id <-pat 
-    }
-  }
-  if (is.null(id)) {
-    patterns <- paste0(patterns, collapse = ", ")
-    cli::cli_inform(c("!" = "file: {f} is ignored as does not start with either: {patterns}."))
+  patterns <- "results"
+  if (startsWith(fname, patterns)) {
+    id <- patterns 
+  } else {
+    id <- NULL
+    cli::cli_inform(c("!" = "file: {f} is ignored as does not start with results."))
   }
   return(id)
 }
