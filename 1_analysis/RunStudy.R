@@ -1,3 +1,15 @@
+cli::cli_inform("Correcting observation periods")
+cdm$observation_period <- cdm$observation_period |>
+  dplyr::group_by(.data$person_id) |>
+  dplyr::summarise(
+    observation_period_id = min(observation_period_id, na.rm = TRUE),
+    observation_period_start_date = min(observation_period_start_date, na.rm = TRUE),
+    observation_period_end_date = !!as.Date(dataCutDate),
+    period_type_concept_id = min(period_type_concept_id, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  dplyr::compute()
+
 # get cdm summary ------
 cli::cli_inform("Getting cdm summary")
 cdm_summary <- summary(cdm)
@@ -7,7 +19,7 @@ cli::cli_inform("Getting codes")
 codes <- read_csv(here("codes.csv"), col_types = c("i", "c", "c")) |>
   mutate(cohort_name = omopgenerics::toSnakeCase(cohort_name))
 codes <- split(x = codes,
-      f = codes$cohort_name)
+               f = codes$cohort_name)
 for(i in seq_along(codes)){
   codes[[i]] <- codes[[i]] |>
     pull("concept_id")
@@ -17,8 +29,8 @@ codes <- omopgenerics::newCodelist(codes)
 # build cohorts ----
 cli::cli_inform("Instantiating cohorts")
 cdm$hipstar_cohorts_any <- conceptCohort(cdm,
-              codes,
-              name = "hipstar_cohorts_any")
+                                         codes,
+                                         name = "hipstar_cohorts_any")
 attr(cdm$hipstar_cohorts_any, "cohort_set") <-
   attr(cdm$hipstar_cohorts_any, "cohort_set") |>
   dplyr::mutate(cohort_name = paste0(cohort_name, "_any"))
@@ -30,13 +42,13 @@ attr(cdm$hipstar_cohorts_first, "cohort_set") <- attr(cdm$hipstar_cohorts_first,
 
 cli::cli_inform("Combining cohorts")
 cdm <- omopgenerics::bind(cdm$hipstar_cohorts_any,
-     cdm$hipstar_cohorts_first,
-     name = "hipstar_cohorts")
+                          cdm$hipstar_cohorts_first,
+                          name = "hipstar_cohorts")
 
 # add observation period cohort -----
 cli::cli_inform("Adding observation period cohort")
 cdm$obs_cohort <- demographicsCohort(cdm,
-                   name = "obs_cohort") |>
+                                     name = "obs_cohort") |>
   requireIsFirstEntry(name = "obs_cohort")
 attr(cdm$obs_cohort, "cohort_set") <- attr(cdm$obs_cohort, "cohort_set") |>
   dplyr::mutate(cohort_name = "first_entry_in_data_source")
@@ -72,8 +84,8 @@ ids_main <- settings(cdm$hipstar_cohorts) |>
                     "hip_fracture_conditions|hip_fracture_surgery|first_entry_in_data_source")) |>
   pull("cohort_definition_id")
 cdm$hipstar_cohorts_main <-subsetCohorts(cdm$hipstar_cohorts,
-              ids_main,
-              name = "hipstar_cohorts_main") %>%
+                                         ids_main,
+                                         name = "hipstar_cohorts_main") %>%
   mutate(year = clock::get_year(cohort_start_date)) %>%
   addDemographics(ageGroup = list(c(0,17),
                                   c(18, 44),
@@ -84,43 +96,69 @@ cdm$hipstar_cohorts_main <-subsetCohorts(cdm$hipstar_cohorts,
                  temporary = FALSE,
                  overwrite = TRUE)
 
-chars <- cdm$hipstar_cohorts_main %>%
+chars_tables <- cdm$hipstar_cohorts_main %>%
   summariseCharacteristics(strata = list(c("age_group"),
                                          c("sex"),
                                          c("age_group", "sex")),
-    tableIntersectFlag = list(
-      list(tableName = "death",
-           targetStartDate = "death_date",
-           targetEndDate =  "death_date",
-           window = list(c(0, 30))),
-      list(tableName = "death",
-           targetStartDate = "death_date",
-           targetEndDate =  "death_date",
-           window = list(c(0, 90))),
-      list(tableName = "death",
-           targetStartDate = "death_date",
-           targetEndDate =  "death_date",
-           window = list(c(0, 365))),
-      list(tableName = "death",
-           targetStartDate = "death_date",
-           targetEndDate =  "death_date",
-           window = list(c(0, Inf)))
-      ),
-    cohortIntersectFlag = list(
-      list(targetCohortTable = "hipstar_cohorts",
-           window = list(c(-Inf, -1))),
-      list(targetCohortTable = "hipstar_cohorts",
-           window = list(c(0, 0))),
-      list(targetCohortTable = "hipstar_cohorts",
-           window = list(c(1,30))),
-      list(targetCohortTable = "hipstar_cohorts",
-           window = list(c(1,90))),
-      list(targetCohortTable = "hipstar_cohorts",
-           window = list(c(1,365))),
-      list(targetCohortTable = "hipstar_cohorts",
-           window = list(c(1,Inf)))
+                           tableIntersectFlag = list(
+                             list(tableName = "death",
+                                  targetStartDate = "death_date",
+                                  targetEndDate =  "death_date",
+                                  window = list(c(0, 30))),
+                             list(tableName = "death",
+                                  targetStartDate = "death_date",
+                                  targetEndDate =  "death_date",
+                                  window = list(c(0, 90))),
+                             list(tableName = "death",
+                                  targetStartDate = "death_date",
+                                  targetEndDate =  "death_date",
+                                  window = list(c(0, 365))),
+                             list(tableName = "death",
+                                  targetStartDate = "death_date",
+                                  targetEndDate =  "death_date",
+                                  window = list(c(0, Inf)))
+                           ))
+
+
+targetIds <- cohortCount(cdm$hipstar_cohorts) %>%
+  filter(number_records > 0) %>%
+  pull("cohort_definition_id")
+
+chars_cohorts <- list()
+for(i in seq_along(targetIds)){
+  cli::cli_inform(" - Getting characteristics for target cohort {i} of {length(targetIds)}")
+  workingTargetId <- targetIds[[i]]
+  chars_cohorts[[i]] <- cdm$hipstar_cohorts_main %>%
+    summariseCharacteristics(
+      strata = list(c("age_group"),
+                    c("sex"),
+                    c("age_group", "sex")),
+      cohortIntersectFlag = list(
+        list(targetCohortTable = "hipstar_cohorts",
+             targetCohortId = workingTargetId,
+             window = list(c(-Inf, -1))),
+        list(targetCohortTable = "hipstar_cohorts",
+             targetCohortId = workingTargetId,
+             window = list(c(0, 0))),
+        list(targetCohortTable = "hipstar_cohorts",
+             targetCohortId = workingTargetId,
+             window = list(c(1,30))),
+        list(targetCohortTable = "hipstar_cohorts",
+             targetCohortId = workingTargetId,
+             window = list(c(1,90))),
+        list(targetCohortTable = "hipstar_cohorts",
+             targetCohortId = workingTargetId,
+             window = list(c(1,365))),
+        list(targetCohortTable = "hipstar_cohorts",
+             targetCohortId = workingTargetId,
+             window = list(c(1,Inf)))
+      )
     )
-  )
+}
+chars_settings <- settings(chars_cohorts[[i]])
+chars_cohorts <- bind_rows(chars_cohorts)
+chars_cohorts <- chars_cohorts %>%
+  newSummarisedResult(settings = chars_settings)
 
 # summarise large scale characteristics ------
 cli::cli_inform("Getting large scale characteristics")
@@ -147,44 +185,13 @@ lsc <- cdm$hipstar_cohorts_main %>%
     ),
     minimumFrequency = 0)
 
-bindSR <- function(...) {
-  # initial checks
-  results <- list(...)
-  omopgenerics:::assertList(results, class = "summarised_result")
-
-  settings <- lapply(results, settings) |>
-    dplyr::bind_rows(.id = "list_id")
-
-  results <- results |>
-    dplyr::bind_rows(.id = "list_id")
-
-  cols <- colnames(settings)[!colnames(settings) %in% c("list_id", "result_id")]
-  dic <- settings |>
-    dplyr::select(!dplyr::all_of(c("list_id", "result_id"))) |>
-    dplyr::distinct() |>
-    dplyr::mutate("new_result_id" = as.integer(dplyr::row_number())) |>
-    dplyr::inner_join(settings, by = cols) |>
-    dplyr::select(c("list_id", "result_id", "new_result_id"))
-
-  settings <- settings |>
-    dplyr::inner_join(dic, by = c("result_id", "list_id")) |>
-    dplyr::select(-c("result_id", "list_id")) |>
-    dplyr::rename("result_id" = "new_result_id") |>
-    dplyr::distinct()
-
-  results <- results |>
-    dplyr::inner_join(dic, by = c("result_id", "list_id")) |>
-    dplyr::select(-c("result_id", "list_id")) |>
-    dplyr::rename("result_id" = "new_result_id") |>
-    dplyr::distinct() |>
-    omopgenerics::newSummarisedResult(settings = settings)
-
-  return(results)
-}
-
 # export results -----
 cli::cli_inform("Exporting results")
-results <- bindSR(cdm_summary, cohort_count, chars, lsc)
+results <- omopgenerics::bind(cdm_summary,
+                              cohort_count,
+                              chars_tables,
+                              chars_cohorts,
+                              lsc)
 omopgenerics::exportSummarisedResult(results,
                                      minCellCount = minCellCount,
                                      path = here("results"))

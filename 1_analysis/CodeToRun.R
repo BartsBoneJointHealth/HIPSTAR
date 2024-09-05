@@ -32,10 +32,13 @@ cdmSchema <- "..."
 writeSchema <- "..."
 
 # A prefix to use when creating tables in the database
-writePrefix <- "hipstar"
+writePrefix <- "hipstar_"
 
 # minimum counts that can be displayed according to data governance
 minCellCount <- 5
+
+# date of data extraction will be used as end of followup
+dataCutDate <- Sys.Date()
 
 # create cdm reference -----
 cdm <- cdmFromCon(
