@@ -19,7 +19,7 @@ library(stringr)
 library(RPostgres)
 library(odbc)
 
-# Create the database connection
+# Create the database connection ------
 db <- DBI::dbConnect("...")
 
 # The name of the database

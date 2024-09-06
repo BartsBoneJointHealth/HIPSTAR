@@ -1,3 +1,4 @@
+# correct observation periods ------
 cli::cli_inform("Correcting observation periods")
 cdm$observation_period <- cdm$observation_period |>
   dplyr::group_by(.data$person_id) |>
@@ -145,13 +146,7 @@ for(i in seq_along(targetIds)){
              window = list(c(1,30))),
         list(targetCohortTable = "hipstar_cohorts",
              targetCohortId = workingTargetId,
-             window = list(c(1,90))),
-        list(targetCohortTable = "hipstar_cohorts",
-             targetCohortId = workingTargetId,
-             window = list(c(1,365))),
-        list(targetCohortTable = "hipstar_cohorts",
-             targetCohortId = workingTargetId,
-             window = list(c(1,Inf)))
+             window = list(c(1,90)))
       )
     )
 }
