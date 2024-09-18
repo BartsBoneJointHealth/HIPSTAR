@@ -1,21 +1,7 @@
 # shiny app code
 
 
-This code is used to visualise the results from:
-
-- [1_database_summary](https://github.com/BartsBoneJointHealth/HIPSTAR/tree/main/1_database_summary)
-
-- [2_analysis](https://github.com/BartsBoneJointHealth/HIPSTAR/tree/main/2_analysis)
-
-To launch the shiny add the results in the data folder. You can add them
-as .csv or .zip files, and combine multiple database results.
-
-> [!WARNING]
->
-> **DO NOT CHANGE THE NAME OF THE FILES.** Only results starting with
-> `cdm_summary_...`, `patient_demographics_...`,
-> `large_Scale_characteristics_...` (`1_database_summary`); and
-> `results_` (`2_analysis`) files will be considered.
+This code is used to visualise the results
 
 ## Launch the shiny
 
@@ -41,7 +27,9 @@ Follow the next steps to launch the shiny:
 > You need to install specific versions of packages as packages can
 > change over time, that’s what renv does for you.
 
-4.  Launch app, to launch the app you can click the ‘Run App’ button on
+4. Move your results file (.csv) to the data folder.
+
+5.  Launch app, to launch the app you can click the ‘Run App’ button on
     the top right or run `shiny::runApp()` in the console. The shiny
     should pop-up in a new window.
 
