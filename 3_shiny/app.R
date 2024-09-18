@@ -120,7 +120,7 @@ ui <- dashboardPage(
       tabItem(
         tabName = "study_counts",
         h4("Counts for the different cohorts in the study"),
-        selectors(data$counts, "counts", c("cdm_name", "cohort_name", "year", "age_group", "sex", "variable_name")),
+        selectors(data$counts, "counts", c("cdm_name", "cohort_name", "age_group", "sex", "variable_name")),
         tabsetPanel(
           type = "tabs",
           tabPanel(
@@ -133,7 +133,8 @@ ui <- dashboardPage(
           ),
           tabPanel(
             "Plot",
-            shinyWidgets::pickerInput("counts_facet", label = "Facet by", choices = c("cdm_name", "cohort_name", "age_group", "sex", "variable_name"), selected = character(), multiple = TRUE),
+            shinyWidgets::pickerInput("counts_x", label = "x variable", choices = c("cdm_name", "cohort_name", "age_group", "sex", "variable_name"), selected = "sex", multiple = TRUE, inline = TRUE),
+            shinyWidgets::pickerInput("counts_facet", label = "Facet by", choices = c("cdm_name", "cohort_name", "age_group", "sex", "variable_name"), selected = character(), multiple = TRUE, inline = TRUE),
             plotly::plotlyOutput("counts_plot") |> shinycssloaders::withSpinner()
           )
         )
@@ -142,7 +143,7 @@ ui <- dashboardPage(
       tabItem(
         tabName = "study_characteristics",
         h4("Characteristics of the different cohorts"),
-        selectors(data$chars, "chars", c("cdm_name", "cohort_name", "age_group", "sex")),
+        selectors(data$chars, "chars", c("cdm_name", "cohort_name", "age_group", "sex"), default = list(sex = "overall", age_group = "overall")),
         tabsetPanel(
           type = "tabs",
           tabPanel(
@@ -201,36 +202,30 @@ server <- function(input, output, session) {
   })
   output$counts_gt <- gt::render_gt({
     getCounts() |>
-      visOmopResults::uniteAdditional() |>
-      visOmopResults::uniteGroup(c("cohort_name")) |>
-      visOmopResults::uniteStrata(c("year", "age_group", "sex")) |>
-      CohortCharacteristics::tableCohortCount()
+      visOmopResults::formatEstimateValue() |>
+      visOmopResults::formatEstimateName(estimateNameFormat = c(N = "<count>")) |>
+      visOmopResults::splitAdditional() |>
+      dplyr::select(-c("variable_level", "estimate_name", "estimate_type", "result_id")) |>
+      tidyr::pivot_wider(names_from = "cdm_name", values_from = "estimate_value") |>
+      gt::gt(groupname_col = "cohort_name")
   })
   output$counts_plot <- plotly::renderPlotly({
     x <- getCounts() |>
-      dplyr::filter(year != "overall") |>
-      dplyr::mutate(year = as.integer(year), estimate_value = as.integer(estimate_value)) |>
+      dplyr::mutate(estimate_value = as.integer(estimate_value)) |>
       dplyr::select(-c("result_id", "variable_level", "estimate_name", "estimate_type", "additional_name", "additional_level"))
+    xcol <- input$counts_x
     cols <- input$counts_facet
     noCols <- c("cdm_name", "cohort_name", "age_group", "sex", "variable_name")
+    noCols <- noCols[!noCols %in% c(cols, xcol)]
+    x <- uniteCols(x, noCols, "color")
+    x <- uniteCols(x, cols, "facet")
+    x <- uniteCols(x, xcol, "x")
+    p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes(x = x, y = estimate_value, fill = color)) +
+      ggplot2::geom_col() +
+      ggplot2::geom_line()
     if (length(cols) > 0) {
-      x <- x |> 
-        tidyr::unite("facet", dplyr::all_of(cols))
-      noCols <- noCols[!noCols %in% cols]
-      if (length(noCols) > 0) {
-        x <- x |> tidyr::unite("color", dplyr::all_of(noCols))
-      } else {
-        x <- x |> dplyr::mutate("color" = "all")
-      }
-    } else {
-      x <- x |> 
-        dplyr::mutate(facet = "overall") |> 
-        tidyr::unite("color", dplyr::all_of(noCols))
+      p <- p + ggplot2::facet_wrap(facets = "facet") 
     }
-    p <- ggplot2::ggplot(data = x, mapping = ggplot2::aes(x = year, y = estimate_value, color = color)) +
-      ggplot2::geom_point() +
-      ggplot2::geom_line() +
-      ggplot2::facet_wrap(ggplot2::vars(facet)) 
     plotly::ggplotly(p)
   })
   # study characteristics ----
@@ -239,9 +234,26 @@ server <- function(input, output, session) {
   })
   output$chars_gt <- gt::render_gt({
     getChars() |>
-      visOmopResults::uniteGroup(c("cohort_name")) |>
-      visOmopResults::uniteStrata(c("age_group", "sex")) |>
-      CohortCharacteristics::tableCharacteristics()
+      visOmopResults::formatEstimateValue() |>
+      visOmopResults::formatEstimateName(estimateNameFormat = c(
+        `N (%)` = "<count> (<percentage>%)", 
+        N = "<count>", 
+        `Median [Q25 - Q75]` = "<median> [<q25> - <q75>]", 
+        `Mean (SD)` = "<mean> (<sd>)", 
+        Range = "<min> to <max>"
+      ), keepNotFormatted = FALSE) |>
+      dplyr::select(-c("estimate_type", "additional_name", "additional_level", "result_id")) |>
+      dplyr::mutate(order = dplyr::case_when(
+        stringr::str_starts(tolower(.data$variable_name), "hipstar") ~ 3,
+        stringr::str_starts(tolower(.data$variable_name), "death") ~ 2,
+        .default = 1 
+      )) |>
+      dplyr::arrange(order, variable_name, variable_level) |>
+      dplyr::select(-"order") |>
+      tidyr::pivot_wider(names_from = "cdm_name", values_from = "estimate_value") |>
+      visOmopResults::gtTable(
+        groupColumn = "cohort_name", 
+        colsToMergeRows = c("variable_name", "sex", "age_group"))
   })
   # study lsc ----
   getLsc <- reactive({

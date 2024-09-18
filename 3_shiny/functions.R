@@ -1,48 +1,57 @@
 readData <- function() {
-  # files <- list.files(here::here("data"), full.names = TRUE)
-  # filesCsv <- files[tools::file_ext(files) == "csv"]
-  # data <- readFiles(filesCsv)
-  # filesZip <- files[tools::file_ext(files) == "zip"]
-  # tmpdir <- tempdir()
-  # for (fileZipe in filesZip) {
-  #   unzip(fileZipe, exdir = tmpdir)
-  #   files <- list.files(here::here("data"), full.names = TRUE)
-  #   filesCsv <- files[tools::file_ext(files) == "csv"]
-  #   data <- readFiles(filesCsv)
-  # }
-  # types <- "results"
-  # for (ty in types) {
-  #   if (ty %in% names(data)) {
-  #     data[[ty]] <- data[[ty]] |> 
-  #       dplyr::distinct() |>
-  #       omopgenerics::newSummarisedResult()
-  #   }
-  # }
-  # 
-  # data$counts <- data$results |> 
-  #   visOmopResults::filterSettings(result_type == "summarised_characteristics") |>
-  #   dplyr::filter(variable_name %in% c("Number subjects", "Number records"))
-  # 
-  # data$lsc <- data$results |> 
-  #   visOmopResults::filterSettings(result_type == "summarised_large_scale_characteristics")
-  # 
-  # data$cdm_summary <- data$results |> 
-  #   visOmopResults::filterSettings(result_type == "cdm_snapshot")
-  # 
-  # data$patient_demographics <- data$results |> 
-  #   visOmopResults::filterSettings(result_type == "summarised_characteristics") |>
-  #   dplyr::filter(!grepl("year", strata_name))
-  # data$results <- NULL
+  files <- list.files(here::here("data"), full.names = TRUE)
+  filesCsv <- files[tools::file_ext(files) == "csv"]
+  data <- readFiles(filesCsv)
+  filesZip <- files[tools::file_ext(files) == "zip"]
+  tmpdir <- tempdir()
+  for (fileZipe in filesZip) {
+    unzip(fileZipe, exdir = tmpdir)
+    files <- list.files(here::here("data"), full.names = TRUE)
+    filesCsv <- files[tools::file_ext(files) == "csv"]
+    data <- readFiles(filesCsv)
+  }
+  types <- "results"
+  for (ty in types) {
+    if (ty %in% names(data)) {
+      data[[ty]] <- data[[ty]] |>
+        dplyr::distinct() |>
+        omopgenerics::newSummarisedResult()
+    }
+  }
+
+  data$counts <- data$results |>
+    visOmopResults::filterSettings(
+      result_type %in% c("summarise_characteristics", "summarised_characteristics")
+    ) |>
+    dplyr::filter(variable_name %in% c("Number subjects", "Number records"))
+    
+
+  data$lsc <- data$results |>
+    visOmopResults::filterSettings(
+      result_type %in% c("summarise_large_scale_characteristics", "summarised_large_scale_characteristics")
+    )
+
+  data$cdm_summary <- data$results |>
+    visOmopResults::filterSettings(result_type == "cdm_snapshot")
+
+  data$chars <- data$results |>
+    visOmopResults::filterSettings(
+      result_type %in% c("summarise_characteristics", "summarised_characteristics")
+    ) |>
+    dplyr::filter(!grepl("year", strata_name)) |>
+    updateResultType("summarised_characteristics")
   
-  data <- list()
-  data$lsc <- readr::read_csv(here::here("data", "lsc.csv"), col_types = c(result_id = "i", .default = "c")) |> 
-    omopgenerics::newSummarisedResult()
-  data$counts <- readr::read_csv(here::here("data", "cohort_count.csv"), col_types = c(result_id = "i", .default = "c")) |> 
-    omopgenerics::newSummarisedResult()
-  data$cdm_summary <- readr::read_csv(here::here("data", "cdm_summary.csv"), col_types = c(result_id = "i", .default = "c")) |> 
-    omopgenerics::newSummarisedResult()
-  data$chars <- readr::read_csv(here::here("data", "chars.csv"), col_types = c(result_id = "i", .default = "c")) |> 
-    omopgenerics::newSummarisedResult()
+  data$results <- NULL
+  
+  # data <- list()
+  # data$lsc <- readr::read_csv(here::here("data", "lsc.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+  #   omopgenerics::newSummarisedResult()
+  # data$counts <- readr::read_csv(here::here("data", "cohort_count.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+  #   omopgenerics::newSummarisedResult()
+  # data$cdm_summary <- readr::read_csv(here::here("data", "cdm_summary.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+  #   omopgenerics::newSummarisedResult()
+  # data$chars <- readr::read_csv(here::here("data", "chars.csv"), col_types = c(result_id = "i", .default = "c")) |> 
+  #   omopgenerics::newSummarisedResult()
   
   return(data)
 }
@@ -114,3 +123,19 @@ filterData <- function(data, prefix, input) {
   validate(need(nrow(data) > 0, "No results for selected inputs"))
   return(data)
 }
+uniteCols <- function(x, cols, nm) {
+  if (length(cols) == 0) {
+    x <- x |> dplyr::mutate(!!nm := "")
+  } else if (length(cols) == 1) {
+    x <- x |> dplyr::mutate(!!nm := .data[[cols]])
+  } else {
+    x <- x |> tidyr::unite(col = !!nm, dplyr::all_of(cols), sep = "; ", remove = FALSE)
+  }
+  return(x)
+}
+updateResultType <- function(x, rt) {
+  set <- omopgenerics::settings(x) |>
+    dplyr::mutate("result_type" = .env$rt)
+  omopgenerics::newSummarisedResult(x, set)
+}
+
