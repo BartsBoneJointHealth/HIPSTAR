@@ -14,6 +14,11 @@ readData <- function() {
   for (ty in types) {
     if (ty %in% names(data)) {
       data[[ty]] <- data[[ty]] |>
+        dplyr::mutate(estimate_value = dplyr::if_else(
+          .data$estimate_type == "numeric",
+          as.character(round(suppressWarnings(as.numeric(.data$estimate_value)), 3)),
+          .data$estimate_value
+        )) |>
         dplyr::distinct() |>
         omopgenerics::newSummarisedResult()
     }
