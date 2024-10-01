@@ -16,59 +16,6 @@
       "Repository": "CRAN",
       "Hash": "a8235afbcd6316e6e91433ea47661013"
     },
-    "CDMConnector": {
-      "Package": "CDMConnector",
-      "Version": "1.5.0",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "DBI",
-        "R",
-        "checkmate",
-        "cli",
-        "dbplyr",
-        "dplyr",
-        "fs",
-        "generics",
-        "glue",
-        "jsonlite",
-        "lifecycle",
-        "methods",
-        "omopgenerics",
-        "purrr",
-        "readr",
-        "rlang",
-        "stringi",
-        "stringr",
-        "tidyr",
-        "tidyselect",
-        "waldo",
-        "withr"
-      ],
-      "Hash": "2bae94aed83da2007c938f3d2fa1a48f"
-    },
-    "CohortCharacteristics": {
-      "Package": "CohortCharacteristics",
-      "Version": "0.2.2",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "CDMConnector",
-        "PatientProfiles",
-        "R",
-        "checkmate",
-        "cli",
-        "dplyr",
-        "magrittr",
-        "omopgenerics",
-        "rlang",
-        "snakecase",
-        "stringr",
-        "tidyr",
-        "visOmopResults"
-      ],
-      "Hash": "ee6d278231a3638e6754d46a7c753184"
-    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.2.3",
@@ -128,28 +75,6 @@
         "utils"
       ],
       "Hash": "1920b2f11133b12350024297d8a4ff4a"
-    },
-    "PatientProfiles": {
-      "Package": "PatientProfiles",
-      "Version": "1.1.0",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "CDMConnector",
-        "R",
-        "checkmate",
-        "cli",
-        "dplyr",
-        "lifecycle",
-        "magrittr",
-        "omopgenerics",
-        "purrr",
-        "rlang",
-        "stringr",
-        "tidyr",
-        "visOmopResults"
-      ],
-      "Hash": "8981f38fcf92168d90112c9b5dacd826"
     },
     "R6": {
       "Package": "R6",
@@ -216,16 +141,6 @@
         "sys"
       ],
       "Hash": "cad6cf7f1d5f6e906700b9d3e718c796"
-    },
-    "backports": {
-      "Package": "backports",
-      "Version": "1.5.0",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "R"
-      ],
-      "Hash": "e1e1b9d75c37401117b636b7ae50827a"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -322,18 +237,6 @@
         "rlang"
       ],
       "Hash": "cd9a672193789068eb5a2aad65a0dedf"
-    },
-    "checkmate": {
-      "Package": "checkmate",
-      "Version": "2.3.1",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "R",
-        "backports",
-        "utils"
-      ],
-      "Hash": "c01cab1cb0f9125211a6fc99d540e315"
     },
     "cli": {
       "Package": "cli",
@@ -460,21 +363,6 @@
         "withr"
       ],
       "Hash": "39b2e002522bfd258039ee4e889e0fd1"
-    },
-    "diffobj": {
-      "Package": "diffobj",
-      "Version": "0.3.5",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "R",
-        "crayon",
-        "methods",
-        "stats",
-        "tools",
-        "utils"
-      ],
-      "Hash": "bcaa8b95f8d7d01a5dedfd959ce88ab8"
     },
     "digest": {
       "Package": "digest",
@@ -1176,16 +1064,6 @@
       ],
       "Hash": "9de96463d2117f6ac49980577939dfb3"
     },
-    "rematch2": {
-      "Package": "rematch2",
-      "Version": "2.1.2",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "tibble"
-      ],
-      "Hash": "76c9e04c712a05848ae7a23d2f170a40"
-    },
     "renv": {
       "Package": "renv",
       "Version": "1.0.7",
@@ -1575,24 +1453,6 @@
         "withr"
       ],
       "Hash": "390f9315bc0025be03012054103d227c"
-    },
-    "waldo": {
-      "Package": "waldo",
-      "Version": "0.5.2",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "R",
-        "cli",
-        "diffobj",
-        "fansi",
-        "glue",
-        "methods",
-        "rematch2",
-        "rlang",
-        "tibble"
-      ],
-      "Hash": "c7d3fd6d29ab077cbac8f0e2751449e6"
     },
     "withr": {
       "Package": "withr",
