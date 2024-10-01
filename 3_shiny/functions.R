@@ -10,19 +10,6 @@ readData <- function() {
     filesCsv <- files[tools::file_ext(files) == "csv"]
     data <- readFiles(filesCsv)
   }
-  types <- "results"
-  for (ty in types) {
-    if (ty %in% names(data)) {
-      data[[ty]] <- data[[ty]] |>
-        dplyr::mutate(estimate_value = dplyr::if_else(
-          .data$estimate_type == "numeric",
-          as.character(round(suppressWarnings(as.numeric(.data$estimate_value)), 3)),
-          .data$estimate_value
-        )) |>
-        dplyr::distinct() |>
-        omopgenerics::newSummarisedResult()
-    }
-  }
 
   data$counts <- data$results |>
     visOmopResults::filterSettings(
@@ -63,17 +50,21 @@ readData <- function() {
 readFiles <- function(files, data = list()) {
   for (file in files) {
     pat <- getPat(file)
-    if (!is.null(pat)) {
-      x <- readr::read_csv(file, col_types = c(result_id = "i", .default = "c"))
-      if (pat == "results") {
-        data <- data |> addData("results", x)
-      } else {
-        data <- data |> addData(pat, x)
-      }
-    }
+    x <-  readr::read_csv(file, col_types = c(result_id = "i", .default = "c")) |>
+      dplyr::distinct() |>
+      dplyr::filter(.data$variable_level != "#NAME?" | is.na(.data$variable_level)) |>
+      dplyr::mutate(estimate_value = dplyr::if_else(
+        estimate_type == "numeric", 
+        as.character(round(as.numeric(.data$estimate_value), 4)),
+        .data$estimate_value
+      )) |>
+      dplyr::distinct() |>
+      omopgenerics::newSummarisedResult()
+    data$results <- omopgenerics::bind(data$result, x)
   }
   return(data)
 }
+
 getPat <- function(f) {
   fname <- basename(f)
   patterns <- "results"
